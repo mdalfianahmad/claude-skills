@@ -7,6 +7,10 @@ description: Use this skill whenever the user wants to create, write, draft, or 
 
 Generate a comprehensive Product Requirements Document (PRD) in Markdown for a software project or feature.
 
+## Gate: previous PRD status
+
+Before drafting a new PRD, ask the user: what is the 48-hour test for your previous PRD, or has it been explicitly killed? Do not draft until answered.
+
 ## Output contract
 
 - Output a single `prd.md` file in valid Markdown.
