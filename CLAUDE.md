@@ -1,0 +1,4 @@
+- Skill edits happen here, never only in chat.
+- Every edit gets a CHANGELOG.md line.
+- After any edit: run package.sh, re-upload to claude.ai.
+- Never rewrite skill content wholesale; targeted edits only.
