@@ -182,7 +182,7 @@ def build_english_table(verse_nums, verses, page_break_before=False):
     )
     grid = ('<w:tblGrid>'
             '<w:gridCol w:w="300"/><w:gridCol w:w="3850"/><w:gridCol w:w="624"/>'
-            '<w:gridCol w:w="154"/><w:gridCol w:w="4098"/></w:tblGrid>')
+            '<w:gridCol w:w="300"/><w:gridCol w:w="3952"/></w:tblGrid>')
 
     def para(inner, brk=False):
         bb = '<w:pageBreakBefore/>' if brk else ''
@@ -200,8 +200,8 @@ def build_english_table(verse_nums, verses, page_break_before=False):
         c2 = cell(2134, _latin_run(v['translit'].strip(), C_TRANSLIT, italic=True),
                   margin='<w:right w:w="144" w:type="dxa"/>')
         c3 = cell(347,  '')
-        c4 = cell(79,   _latin_run(str(vn), C_ENGLISH, bold=True, sz=SZ_VNUM))
-        c5 = cell(2271, _latin_run(v['english'].strip(), C_ENGLISH),
+        c4 = cell(168,  _latin_run(str(vn), C_ENGLISH, bold=True, sz=SZ_VNUM))
+        c5 = cell(2182, _latin_run(v['english'].strip(), C_ENGLISH),
                   margin='<w:left w:w="144" w:type="dxa"/>')
         rows.append(f'<w:tr>{c1}{c2}{c3}{c4}{c5}</w:tr>')
     return f'<w:tbl>{tblpr}{grid}{"".join(rows)}</w:tbl>'
