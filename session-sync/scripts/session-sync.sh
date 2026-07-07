@@ -19,6 +19,11 @@
 #   session-sync.sh add <slug> <local-path>  register a project on this machine
 #   session-sync.sh push <slug>              upload this machine's sessions
 #   session-sync.sh pull <slug>              download sessions to this machine
+#   session-sync.sh push-all                 push every registered project
+#   session-sync.sh pull-all                 pull every registered project
+#   session-sync.sh push-auto [dir]          push the project containing dir
+#                                            (default $PWD); silent no-op if
+#                                            unregistered — safe as a hook
 #   session-sync.sh list                     show registered projects + counts
 #
 # Config: ~/.claude/session-sync.conf (plain text, no dependencies)
@@ -170,6 +175,53 @@ cmd_pull() {
   echo "resume with:  cd \"$path\" && claude --resume"
 }
 
+all_slugs() {
+  awk '$1=="project" {print $2}' "$CONFIG"
+}
+
+# Slug whose registered path matches (or contains) the given directory.
+slug_for_dir() {
+  local dir="${1//\\//}" slug path
+  dir="${dir%/}"
+  while read -r slug; do
+    path="$(resolve_project_path "$slug")"
+    path="${path//\\//}"; path="${path%/}"
+    if [[ "$dir" == "$path" || "$dir" == "$path"/* ]]; then
+      printf '%s' "$slug"
+      return 0
+    fi
+  done < <(all_slugs)
+  return 1
+}
+
+cmd_push_all() {
+  [[ -f "$CONFIG" ]] || die "run setup first"
+  local slug
+  while read -r slug; do
+    echo "-- push $slug"
+    ( cmd_push "$slug" ) || echo "push failed for '$slug' (continuing)" >&2
+  done < <(all_slugs)
+}
+
+cmd_pull_all() {
+  [[ -f "$CONFIG" ]] || die "run setup first"
+  local slug
+  while read -r slug; do
+    echo "-- pull $slug"
+    ( cmd_pull "$slug" ) || echo "pull failed for '$slug' (continuing)" >&2
+  done < <(all_slugs)
+}
+
+# Hook-friendly: push the project the current directory belongs to.
+# Exits 0 quietly when the directory is not a registered project, so it can
+# run on every SessionEnd without noise.
+cmd_push_auto() {
+  local dir="${1:-$PWD}" slug
+  [[ -f "$CONFIG" ]] || exit 0
+  slug="$(slug_for_dir "$dir")" || exit 0
+  cmd_push "$slug"
+}
+
 cmd_list() {
   [[ -f "$CONFIG" ]] || die "no config at $CONFIG — run setup first"
   echo "sync repo: $(read_repo_url)"
@@ -184,10 +236,13 @@ cmd_list() {
 }
 
 case "${1:-}" in
-  setup) shift; cmd_setup "$@" ;;
-  add)   shift; cmd_add "$@" ;;
-  push)  shift; cmd_push "$@" ;;
-  pull)  shift; cmd_pull "$@" ;;
-  list)  shift; cmd_list "$@" ;;
-  *) die "usage: session-sync.sh {setup|add|push|pull|list} — see header comment" ;;
+  setup)     shift; cmd_setup "$@" ;;
+  add)       shift; cmd_add "$@" ;;
+  push)      shift; cmd_push "$@" ;;
+  pull)      shift; cmd_pull "$@" ;;
+  push-all)  shift; cmd_push_all "$@" ;;
+  pull-all)  shift; cmd_pull_all "$@" ;;
+  push-auto) shift; cmd_push_auto "$@" ;;
+  list)      shift; cmd_list "$@" ;;
+  *) die "usage: session-sync.sh {setup|add|push|pull|push-all|pull-all|push-auto|list} — see header comment" ;;
 esac

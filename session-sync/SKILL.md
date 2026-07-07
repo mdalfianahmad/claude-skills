@@ -60,6 +60,48 @@ The project's *code* is not carried by this skill — remind the user to
 commit/push the repo itself (or sync files) so machine B matches machine A's
 working state; the transcript only carries the conversation.
 
+## Syncing pre-existing sessions
+
+Nothing special is needed: the first `push` for a project uploads **every**
+transcript already in its `~/.claude/projects/<encoded>/` folder, not just new
+ones. To sync a machine's full history, register each project the user cares
+about (`ls ~/.claude/projects` shows which projects have sessions) and run
+`push-all`. Sessions in unregistered projects are not synced.
+
+## Automation (hands-free sync via hooks)
+
+An LLM agent is the wrong tool for this — the sync is deterministic, so wire
+it into Claude Code hooks instead. Offer this as an opt-in step; get the
+user's OK before editing their `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/skills/session-sync/scripts/session-sync.sh push-auto"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- `push-auto` resolves which registered project the session's directory
+  belongs to and pushes it; in unregistered directories it exits 0 silently,
+  so the hook is a safe global no-op elsewhere. Adjust the script path to
+  wherever the skill is installed on that machine.
+- **Do not add an automatic pull hook.** A `SessionStart` pull would fetch
+  over the network on every launch and can race a session that is starting;
+  pulling is a deliberate `pull <slug>` / `pull-all` when the user arrives at
+  a machine.
+- Merge the hook into the existing `hooks` object if one exists; never
+  clobber other hooks.
+
 ## Troubleshooting
 
 - **Session doesn't appear in `claude --resume`:** the encoded folder name may

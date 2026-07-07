@@ -28,8 +28,14 @@ bash session-sync/scripts/session-sync.sh add myapp "C:/Users/you/myapp"    # Wi
 ```bash
 session-sync.sh push myapp   # after ending a session on machine A
 session-sync.sh pull myapp   # on machine B, then: cd myapp && claude --resume
+session-sync.sh push-all     # push every registered project (incl. all pre-existing sessions)
+session-sync.sh pull-all     # pull every registered project
 session-sync.sh list         # local vs synced session counts
 ```
+
+To automate pushes, add a `SessionEnd` hook running `session-sync.sh
+push-auto` (see SKILL.md) — it pushes the project a session just ended in and
+is a silent no-op everywhere else. Pulling stays manual by design.
 
 ## Caveats
 
