@@ -110,6 +110,31 @@ copy_newer() {
   echo "$copied"
 }
 
+# Rewrite one transcript's machine-specific absolute paths so the local
+# Claude Code recognizes the session as belonging to this machine. The
+# origin project path is read from the file itself (first recorded cwd =
+# the directory the session started in). Returns 0 if the file was
+# rewritten, 1 if it already matches this machine.
+localize_one() {
+  local f="$1" local_path="$2" origin origin_fwd to_native
+  origin="$(grep -m1 -o '"cwd":"[^"]*"' "$f" 2>/dev/null | head -1 | sed 's/^"cwd":"//; s/"$//')" || origin=""
+  [[ -n "$origin" ]] || return 1
+  # normalize JSON-escaped backslashes to forward slashes for comparison
+  origin_fwd="$(printf '%s' "$origin" | sed 's|\\\\|/|g; s|\\|/|g; s|//*|/|g')"
+  [[ "$origin_fwd" == "$local_path" ]] && return 1
+  if [[ "$local_path" =~ ^[A-Za-z]: ]]; then
+    to_native="${local_path//\//\\\\}"  # Windows: JSON-escaped backslashes
+  else
+    to_native="$local_path"
+  fi
+  command -v perl >/dev/null || { echo "warning: perl not found — cannot localize $f" >&2; return 1; }
+  FROM="$origin" TO="$to_native" perl -pi -e 's/\Q$ENV{FROM}\E/$ENV{TO}/g' "$f"
+  if [[ "$origin" != "$origin_fwd" ]]; then
+    FROM="$origin_fwd" TO="$to_native" perl -pi -e 's/\Q$ENV{FROM}\E/$ENV{TO}/g' "$f"
+  fi
+  return 0
+}
+
 warn_if_live() {
   local dir="$1"
   if [[ -d "$dir" ]] && find "$dir" -name '*.jsonl' -mmin "-$ACTIVE_WINDOW_MIN" 2>/dev/null | grep -q .; then
@@ -177,7 +202,19 @@ cmd_pull() {
   repo_update
   [[ -d "$CLONE_DIR/sessions/$slug" ]] || die "no synced sessions for '$slug' in the repo — push from the other machine first"
   copied="$(copy_newer "$CLONE_DIR/sessions/$slug" "$dst")"
-  echo "pulled $copied session file(s) for '$slug'"
+  # Localize transcripts that still carry another machine's paths (covers
+  # both files copied just now and files from earlier pulls). Reset mtime to
+  # the repo copy afterwards so localization alone never re-triggers a push.
+  local localized=0 f base
+  shopt -s nullglob
+  for f in "$dst"/*.jsonl; do
+    if localize_one "$f" "$path"; then
+      base="$(basename "$f")"
+      { [[ -e "$CLONE_DIR/sessions/$slug/$base" ]] && touch -r "$CLONE_DIR/sessions/$slug/$base" "$f"; } || true
+      localized=$((localized + 1))
+    fi
+  done
+  echo "pulled $copied session file(s) for '$slug' (localized paths in $localized)"
   echo "resume with:  cd \"$path\" && claude --resume"
 }
 

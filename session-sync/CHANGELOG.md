@@ -10,3 +10,11 @@
 - add harvest-cowork: collect desktop-app Cowork (local agent mode)
   transcripts — which live outside ~/.claude/projects — into a registered
   'cowork' project; push-all harvests automatically when configured
+
+## 2026-07-08
+
+- pull now localizes transcripts: machine-specific absolute paths recorded
+  inside pulled session files (cwd fields, path mentions) are rewritten to
+  the local machine's registered project path, so cross-OS resume works
+  instead of "session not found"; mtimes reset to repo copy so localization
+  never re-triggers a push
