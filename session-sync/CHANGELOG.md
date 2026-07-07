@@ -7,3 +7,6 @@
 - add push-all / pull-all / push-auto commands and a SessionEnd hook recipe
   for hands-free pushing; document that first push syncs all pre-existing
   sessions
+- add harvest-cowork: collect desktop-app Cowork (local agent mode)
+  transcripts — which live outside ~/.claude/projects — into a registered
+  'cowork' project; push-all harvests automatically when configured

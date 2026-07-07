@@ -24,6 +24,9 @@
 #   session-sync.sh push-auto [dir]          push the project containing dir
 #                                            (default $PWD); silent no-op if
 #                                            unregistered — safe as a hook
+#   session-sync.sh harvest-cowork           copy desktop-app Cowork (local
+#                                            agent mode) transcripts into the
+#                                            project registered as 'cowork'
 #   session-sync.sh list                     show registered projects + counts
 #
 # Config: ~/.claude/session-sync.conf (plain text, no dependencies)
@@ -39,6 +42,9 @@ CONFIG="${CLAUDE_SESSION_SYNC_CONFIG:-$HOME/.claude/session-sync.conf}"
 CLONE_DIR="${CLAUDE_SESSION_SYNC_CLONE:-$HOME/.claude/session-sync-repo}"
 PROJECTS_DIR="$HOME/.claude/projects"
 ACTIVE_WINDOW_MIN=2  # a transcript touched this recently is treated as live
+# Desktop app "local agent mode" (Cowork) sessions live outside ~/.claude,
+# each with its own nested .claude/projects tree (macOS default below).
+COWORK_SRC="${CLAUDE_COWORK_DIR:-$HOME/Library/Application Support/Claude/local-agent-mode-sessions}"
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -197,6 +203,11 @@ slug_for_dir() {
 cmd_push_all() {
   [[ -f "$CONFIG" ]] || die "run setup first"
   local slug
+  # Refresh desktop Cowork transcripts first when that pipeline is configured.
+  if [[ -d "$COWORK_SRC" ]] \
+     && awk '$1=="project" && $2=="cowork" {f=1} END {exit !f}' "$CONFIG"; then
+    ( cmd_harvest_cowork ) || echo "cowork harvest failed (continuing)" >&2
+  fi
   while read -r slug; do
     echo "-- push $slug"
     ( cmd_push "$slug" ) || echo "push failed for '$slug' (continuing)" >&2
@@ -222,6 +233,29 @@ cmd_push_auto() {
   cmd_push "$slug"
 }
 
+# Copy desktop-app Cowork (local agent mode) transcripts into the project
+# registered under the 'cowork' slug, so they sync like any other project.
+# Main transcripts only — subagent sidecars are skipped.
+cmd_harvest_cowork() {
+  [[ -f "$CONFIG" ]] || die "run setup first"
+  [[ -d "$COWORK_SRC" ]] || die "no desktop local-agent-mode sessions at: $COWORK_SRC"
+  local path enc dst f base total=0
+  path="$(resolve_project_path cowork)" \
+    || die "register a landing project first: session-sync.sh add cowork <local-path>"
+  enc="$(encode_path "$path")"
+  dst="$PROJECTS_DIR/$enc"
+  mkdir -p "$dst"
+  while IFS= read -r -d '' f; do
+    base="$(basename "$f")"
+    if [[ ! -e "$dst/$base" || "$f" -nt "$dst/$base" ]]; then
+      cp -p "$f" "$dst/$base"
+      total=$((total + 1))
+    fi
+  done < <(find "$COWORK_SRC" -path '*/.claude/projects/*' -name '*.jsonl' \
+             -not -path '*/subagents/*' -print0 2>/dev/null)
+  echo "harvested $total cowork transcript(s) into $dst"
+}
+
 cmd_list() {
   [[ -f "$CONFIG" ]] || die "no config at $CONFIG — run setup first"
   echo "sync repo: $(read_repo_url)"
@@ -243,6 +277,7 @@ case "${1:-}" in
   push-all)  shift; cmd_push_all "$@" ;;
   pull-all)  shift; cmd_pull_all "$@" ;;
   push-auto) shift; cmd_push_auto "$@" ;;
+  harvest-cowork) shift; cmd_harvest_cowork "$@" ;;
   list)      shift; cmd_list "$@" ;;
-  *) die "usage: session-sync.sh {setup|add|push|pull|push-all|pull-all|push-auto|list} — see header comment" ;;
+  *) die "usage: session-sync.sh {setup|add|push|pull|push-all|pull-all|push-auto|harvest-cowork|list} — see header comment" ;;
 esac

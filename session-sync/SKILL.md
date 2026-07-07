@@ -60,6 +60,24 @@ The project's *code* is not carried by this skill — remind the user to
 commit/push the repo itself (or sync files) so machine B matches machine A's
 working state; the transcript only carries the conversation.
 
+## Desktop app Cowork sessions
+
+The desktop app's "local agent mode" (Cowork) sessions do NOT live in
+`~/.claude/projects` — each one has its own nested `.claude/projects` tree
+under `~/Library/Application Support/Claude/local-agent-mode-sessions/`
+(override with `CLAUDE_COWORK_DIR` on other platforms). To sync them:
+
+1. Register a landing project once: `mkdir -p ~/Cowork &&
+   session-sync.sh add cowork ~/Cowork` (the slug MUST be `cowork`).
+2. `session-sync.sh harvest-cowork` copies the main transcripts into that
+   project; then `push cowork` (and `push-all` harvests automatically when
+   the `cowork` slug is registered and the desktop directory exists).
+
+Regular desktop-app sessions (non-Cowork) already store their transcripts in
+`~/.claude/projects` and need no special handling. Subagent sidecar
+transcripts are not harvested — only the main session files that
+`claude --resume` lists.
+
 ## Syncing pre-existing sessions
 
 Nothing special is needed: the first `push` for a project uploads **every**
