@@ -23,3 +23,6 @@
   its own marketplace), public README, MIT LICENSE, and publish.sh, which
   assembles the installable tree by copying this skill in at publish time so
   the plugin can never drift from the skill source
+- add "upload my sessions", "download my sessions", and "resume my sessions
+  from my other machine" trigger phrasings to the skill description so both
+  directions of the flow activate the skill reliably
