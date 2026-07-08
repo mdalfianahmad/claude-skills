@@ -18,3 +18,8 @@
   the local machine's registered project path, so cross-OS resume works
   instead of "session not found"; mtimes reset to repo copy so localization
   never re-triggers a push
+- package for public sharing as a Claude Code plugin: new sibling dir
+  session-sync-plugin/ holds plugin.json + marketplace.json (repo doubles as
+  its own marketplace), public README, MIT LICENSE, and publish.sh, which
+  assembles the installable tree by copying this skill in at publish time so
+  the plugin can never drift from the skill source

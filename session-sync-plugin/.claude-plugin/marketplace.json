@@ -1,0 +1,13 @@
+{
+  "name": "session-sync-marketplace",
+  "owner": {
+    "name": "Muhammad Alfian Bin Ahmad"
+  },
+  "plugins": [
+    {
+      "name": "session-sync",
+      "source": "./",
+      "description": "Sync Claude Code session transcripts between machines through your own private git repo, so a session started on one machine can be resumed on another with claude --resume."
+    }
+  ]
+}

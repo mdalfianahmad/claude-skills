@@ -1,0 +1,13 @@
+{
+  "name": "session-sync",
+  "displayName": "Session Sync",
+  "description": "Sync Claude Code session transcripts between machines (macOS, Windows, Linux) through your own private git repo, so a session started on one machine can be resumed on another with claude --resume.",
+  "author": {
+    "name": "Muhammad Alfian Bin Ahmad",
+    "url": "https://github.com/mdalfianahmad"
+  },
+  "homepage": "https://github.com/mdalfianahmad/claude-code-session-sync",
+  "repository": "https://github.com/mdalfianahmad/claude-code-session-sync",
+  "license": "MIT",
+  "keywords": ["session", "sync", "resume", "transcripts", "cross-machine", "portability"]
+}
