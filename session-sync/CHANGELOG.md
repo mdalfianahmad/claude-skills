@@ -26,3 +26,9 @@
 - add "upload my sessions", "download my sessions", and "resume my sessions
   from my other machine" trigger phrasings to the skill description so both
   directions of the flow activate the skill reliably
+
+## 2026-07-09
+
+- plugin README: install-on-every-machine note and a "Using it" section
+  showing the upload-end and resume-end phrasings and that either machine
+  can play either role; set description + topics on the public GitHub repo

@@ -29,14 +29,31 @@ into the plugin.
 
 ## Install (as a Claude Code plugin)
 
+Install it on **every machine** you want to sync (both ends use the same
+plugin):
+
 ```
 /plugin marketplace add mdalfianahmad/claude-code-session-sync
 /plugin install session-sync@session-sync-marketplace
 ```
 
-Then just ask Claude Code things like *"sync my sessions"* or *"I want to
-pick this session up on my laptop"* — the bundled skill walks through setup
-and daily use. Updates: `/plugin marketplace update session-sync-marketplace`.
+Updates: `/plugin marketplace update session-sync-marketplace`.
+
+## Using it — just talk to Claude Code
+
+The bundled skill walks through one-time setup (private repo, registering
+projects) the first time you ask, then day to day it's:
+
+- **On the machine you're leaving** — *"upload my sessions so I can resume
+  on another device"* (or *"push this session"*, *"sync my sessions"*).
+  Claude pushes the transcripts to your private repo. An optional
+  session-end hook (recipe in the skill) makes this automatic.
+- **On the machine you're arriving at** — *"resume my sessions from my
+  Mac"* (or *"pull my sessions"*, *"continue this session on Windows"*).
+  Claude pulls them, rewrites machine-specific paths for the local system,
+  and hands you `cd <project> && claude --resume`.
+
+Either machine can play either role — there's no fixed sender or receiver.
 
 ## Install (standalone, no plugin)
 
