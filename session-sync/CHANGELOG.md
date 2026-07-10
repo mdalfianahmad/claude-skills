@@ -27,6 +27,13 @@
   from my other machine" trigger phrasings to the skill description so both
   directions of the flow activate the skill reliably
 
+## 2026-07-10
+
+- fix: `list` reported local:0 for every project (and the live-session
+  warning never fired) when a `~/.claude/projects` folder is a symlink —
+  e.g. relocated to iCloud Drive. `find` now runs with `-H` so it follows
+  symlinked project folders; push/pull already worked (they use globs)
+
 ## 2026-07-09
 
 - plugin README: install-on-every-machine note and a "Using it" section

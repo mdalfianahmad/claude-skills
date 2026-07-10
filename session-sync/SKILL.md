@@ -132,6 +132,10 @@ user's OK before editing their `~/.claude/settings.json`:
   Code runs in.
 - **Push says "nothing new":** transcripts are compared by mtime; the repo
   already has the latest copies.
+- **`list` shows local:0 but the sessions exist:** the project folders under
+  `~/.claude/projects` may be symlinks (e.g. relocated to a cloud drive).
+  Supported since the `find -H` fix — update the script on that machine
+  (`git -C ~/.claude/session-sync-repo pull`, or update the plugin).
 - **Merge conflicts in the sync repo:** should not happen (each machine only
   adds/overwrites whole files), but if it does, keep the newest file version.
 

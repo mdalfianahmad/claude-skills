@@ -137,7 +137,7 @@ localize_one() {
 
 warn_if_live() {
   local dir="$1"
-  if [[ -d "$dir" ]] && find "$dir" -name '*.jsonl' -mmin "-$ACTIVE_WINDOW_MIN" 2>/dev/null | grep -q .; then
+  if [[ -d "$dir" ]] && find -H "$dir" -name '*.jsonl' -mmin "-$ACTIVE_WINDOW_MIN" 2>/dev/null | grep -q .; then
     echo "warning: a transcript in $dir was modified in the last ${ACTIVE_WINDOW_MIN} min." >&2
     echo "warning: if that session is still running, end it first or its copy will be a partial snapshot." >&2
   fi
@@ -146,6 +146,7 @@ warn_if_live() {
 cmd_setup() {
   local url="${1:-}"
   [[ -n "$url" ]] || die "usage: session-sync.sh setup <git-repo-url>  (the repo MUST be private)"
+  mkdir -p "$(dirname "$CONFIG")"
   if [[ ! -f "$CONFIG" ]]; then
     printf 'repo=%s\n' "$url" > "$CONFIG"
   else
@@ -288,7 +289,7 @@ cmd_harvest_cowork() {
       cp -p "$f" "$dst/$base"
       total=$((total + 1))
     fi
-  done < <(find "$COWORK_SRC" -path '*/.claude/projects/*' -name '*.jsonl' \
+  done < <(find -H "$COWORK_SRC" -path '*/.claude/projects/*' -name '*.jsonl' \
              -not -path '*/subagents/*' -print0 2>/dev/null)
   echo "harvested $total cowork transcript(s) into $dst"
 }
@@ -300,8 +301,10 @@ cmd_list() {
   awk '$1=="project" {print $2, "->", substr($0, index($0, $3))}' "$CONFIG" | while read -r slug _ path; do
     local_enc="$(encode_path "$path")"
     local_count=0 repo_count=0
-    [[ -d "$PROJECTS_DIR/$local_enc" ]] && local_count="$(find "$PROJECTS_DIR/$local_enc" -maxdepth 1 -name '*.jsonl' | wc -l | tr -d ' ')"
-    [[ -d "$CLONE_DIR/sessions/$slug" ]] && repo_count="$(find "$CLONE_DIR/sessions/$slug" -maxdepth 1 -name '*.jsonl' | wc -l | tr -d ' ')"
+    # -H: a project folder may itself be a symlink (e.g. relocated to a cloud
+    # drive); without it find won't descend and every local count reads 0.
+    [[ -d "$PROJECTS_DIR/$local_enc" ]] && local_count="$(find -H "$PROJECTS_DIR/$local_enc" -maxdepth 1 -name '*.jsonl' | wc -l | tr -d ' ')"
+    [[ -d "$CLONE_DIR/sessions/$slug" ]] && repo_count="$(find -H "$CLONE_DIR/sessions/$slug" -maxdepth 1 -name '*.jsonl' | wc -l | tr -d ' ')"
     echo "  $slug  local:$local_count  repo:$repo_count  ($path)"
   done
 }
